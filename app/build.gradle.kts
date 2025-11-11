@@ -60,7 +60,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    //UI
+    // UI
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.1")
     implementation("androidx.activity:activity-compose:1.9.0")
@@ -69,31 +69,26 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-
-    //Navegacion
+// Navegación (NavController)
     implementation("androidx.navigation:navigation-compose:2.7.7")
-
-    //ViewModel
+// ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1")
-
-    //Base de datos Room / SQLite
+// Base de Datos (Room / SQLite)
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1") // Para Coroutines y Flow
-    ksp("androidx.room:room-compiler:2.6.1")
-
-    //Ubicacion GPS
+    ksp("androidx.room:room-compiler:2.6.1") // Compilador de Room
+// Ubicación (GPS)
     implementation("com.google.android.gms:play-services-location:21.2.0")
-
-    //Google Maps
-    implementation("com.google.maps.android:maps-compose:4.3.3")
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-
-    //Camara
-    implementation("androidx.camera:camera:camera-core:1.3.3")
+// Mapas (OSM)
+    implementation("org.osmdroid:osmdroid-compose:1.0.0")
+// Cámara (CameraX)
+    implementation("androidx.camera:camera-core:1.3.3")
     implementation("androidx.camera:camera-camera2:1.3.3")
     implementation("androidx.camera:camera-lifecycle:1.3.3")
     implementation("androidx.camera:camera-view:1.3.3")
-
-    //Carga de imagenes con Coil
+// Carga de Imágenes (Coil para la galería)
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    implementation("androidx.compose.material:material-icons-core:1.x.x")
+// Or material-icons-extended for a wider range of icons
 }
