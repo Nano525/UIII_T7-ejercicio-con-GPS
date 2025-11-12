@@ -21,10 +21,12 @@ fun MapScreen(
     val allPoints by viewModel.allTripPoints.collectAsState()
     val context = LocalContext.current
 
-    // Agrupar los puntos por viaje, como en tu versión original
+    // Agrupar los puntos por viaje
     val pointsByTrip = allPoints.groupBy { it.tripId }
 
-    // AndroidView te permite usar vistas clásicas (como MapView) dentro de Compose
+    // Mantener el controlador del mapa
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
@@ -33,33 +35,34 @@ fun MapScreen(
             MapView(ctx).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(true)
-
-                // Si hay puntos, centramos y dibujamos
-                if (allPoints.isNotEmpty()) {
-                    val first = allPoints.first()
-                    controller.setCenter(GeoPoint(first.latitude, first.longitude))
-                    controller.setZoom(10.0)
-
-                    // Dibujar las rutas (una línea por viaje)
-                    pointsByTrip.values.forEach { tripPoints ->
-                        val polyline = Polyline().apply {
-                            setPoints(tripPoints.map { GeoPoint(it.latitude, it.longitude) })
-                        }
-                        overlays.add(polyline)
-                    }
-                }
+                mapView = this
             }
         },
-        update = { mapView ->
-            // Actualizar rutas si cambian los puntos
-            mapView.overlays.clear()
-            pointsByTrip.values.forEach { tripPoints ->
-                val polyline = Polyline().apply {
-                    setPoints(tripPoints.map { GeoPoint(it.latitude, it.longitude) })
-                }
-                mapView.overlays.add(polyline)
+        update = { map ->
+            // Limpiar líneas anteriores
+            map.overlays.clear()
+
+            if (allPoints.isNotEmpty()) {
+                // Centrar en el primer punto
+                val first = allPoints.first()
+                val center = GeoPoint(first.latitude, first.longitude)
+                map.controller.setZoom(15.0)
+                map.controller.setCenter(center)
             }
-            mapView.invalidate()
+
+            // Dibujar una línea (Polyline) por cada viaje
+            pointsByTrip.values.forEach { tripPoints ->
+                if (tripPoints.size >= 2) {
+                    val line = Polyline().apply {
+                        setPoints(tripPoints.map { GeoPoint(it.latitude, it.longitude) })
+                        outlinePaint.color = android.graphics.Color.BLUE
+                        outlinePaint.strokeWidth = 6f
+                    }
+                    map.overlays.add(line)
+                }
+            }
+
+            map.invalidate()
         }
     )
 }
