@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "1.9.10-1.0.13" //Esto es para Room
+    id("com.google.devtools.ksp") version "2.0.21-1.0.26"
     //Aqui iria el codigo para la API Key
 }
 
@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.play.services.maps)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -80,7 +81,8 @@ dependencies {
 // Ubicación (GPS)
     implementation("com.google.android.gms:play-services-location:21.2.0")
 // Mapas (OSM)
-    implementation("org.osmdroid:osmdroid-compose:1.0.0")
+    implementation("org.osmdroid:osmdroid-android:6.1.16")
+
 // Cámara (CameraX)
     implementation("androidx.camera:camera-core:1.3.3")
     implementation("androidx.camera:camera-camera2:1.3.3")
@@ -89,6 +91,10 @@ dependencies {
 // Carga de Imágenes (Coil para la galería)
     implementation("io.coil-kt:coil-compose:2.6.0")
 
-    implementation("androidx.compose.material:material-icons-core:1.x.x")
-// Or material-icons-extended for a wider range of icons
+    implementation("androidx.compose.material:material-icons-core:1.7.5")
+    implementation("androidx.compose.material:material-icons-extended:1.7.5")
+
+    // Google Maps para Jetpack Compose
+    implementation("com.google.maps.android:maps-compose:4.4.1")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
 }

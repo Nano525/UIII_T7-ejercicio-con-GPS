@@ -20,8 +20,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.ejemplo.miappgps.data.db.Trip
-import com.ejemplo.miappgps.viewmodel.GalleryViewModel
+import mx.edu.utez.uiii_t7.data.db.Trip
+import mx.edu.utez.uiii_t7.viewmodel.GalleryViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

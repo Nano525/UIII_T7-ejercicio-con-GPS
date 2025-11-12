@@ -1,46 +1,65 @@
 package mx.edu.utez.uiii_t7.ui.map
 
+import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ejemplo.miappgps.viewmodel.MapViewModel
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.rememberCameraPositionState
 import mx.edu.utez.uiii_t7.viewmodel.MapViewModel
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polyline
 
 @Composable
 fun MapScreen(
     viewModel: MapViewModel = viewModel()
 ) {
     val allPoints by viewModel.allTripPoints.collectAsState()
-// Agrupamos puntos por tripId para dibujar líneas separadas
+    val context = LocalContext.current
+
+    // Agrupar los puntos por viaje, como en tu versión original
     val pointsByTrip = allPoints.groupBy { it.tripId }
-    val cameraPositionState = rememberCameraPositionState {
-// Centrar la cámara en el primer punto (si existe)
-        allPoints.firstOrNull()?.let {
-            position = CameraPosition.fromLatLngZoom(LatLng(it.latitude, it.longitude), 10f)
-        }
-    }
-    GoogleMap(
+
+    // AndroidView te permite usar vistas clásicas (como MapView) dentro de Compose
+    AndroidView(
         modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState
-    ) {
-        pointsByTrip.forEach { (tripId, points) ->
-            val latLngList = points.map { LatLng(it.latitude, it.longitude) }
-            if (latLngList.size >= 2) {
-                Polyline(
-                    points = latLngList,
+        factory = { ctx ->
+            Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
 
-// Puedes añadir colores aleatorios si quieres
+            MapView(ctx).apply {
+                setTileSource(TileSourceFactory.MAPNIK)
+                setMultiTouchControls(true)
 
-                )
+                // Si hay puntos, centramos y dibujamos
+                if (allPoints.isNotEmpty()) {
+                    val first = allPoints.first()
+                    controller.setCenter(GeoPoint(first.latitude, first.longitude))
+                    controller.setZoom(10.0)
+
+                    // Dibujar las rutas (una línea por viaje)
+                    pointsByTrip.values.forEach { tripPoints ->
+                        val polyline = Polyline().apply {
+                            setPoints(tripPoints.map { GeoPoint(it.latitude, it.longitude) })
+                        }
+                        overlays.add(polyline)
+                    }
+                }
             }
+        },
+        update = { mapView ->
+            // Actualizar rutas si cambian los puntos
+            mapView.overlays.clear()
+            pointsByTrip.values.forEach { tripPoints ->
+                val polyline = Polyline().apply {
+                    setPoints(tripPoints.map { GeoPoint(it.latitude, it.longitude) })
+                }
+                mapView.overlays.add(polyline)
+            }
+            mapView.invalidate()
         }
-    }
+    )
 }
