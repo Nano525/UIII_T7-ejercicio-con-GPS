@@ -13,6 +13,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polyline
+import kotlin.math.abs
 
 @Composable
 fun MapScreen(
@@ -20,46 +21,62 @@ fun MapScreen(
 ) {
     val allPoints by viewModel.allTripPoints.collectAsState()
     val context = LocalContext.current
-
-    // Agrupar los puntos por viaje
     val pointsByTrip = allPoints.groupBy { it.tripId }
-
-    // Mantener el controlador del mapa
-    var mapView by remember { mutableStateOf<MapView?>(null) }
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx ->
             Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
-
             MapView(ctx).apply {
                 setTileSource(TileSourceFactory.MAPNIK)
                 setMultiTouchControls(true)
-                mapView = this
             }
         },
         update = { map ->
-            // Limpiar líneas anteriores
             map.overlays.clear()
 
-            if (allPoints.isNotEmpty()) {
-                // Centrar en el primer punto
-                val first = allPoints.first()
-                val center = GeoPoint(first.latitude, first.longitude)
-                map.controller.setZoom(15.0)
-                map.controller.setCenter(center)
-            }
+            val validPoints = allPoints.filter { it.latitude != 0.0 && it.longitude != 0.0 }
 
-            // Dibujar una línea (Polyline) por cada viaje
-            pointsByTrip.values.forEach { tripPoints ->
-                if (tripPoints.size >= 2) {
-                    val line = Polyline().apply {
-                        setPoints(tripPoints.map { GeoPoint(it.latitude, it.longitude) })
-                        outlinePaint.color = android.graphics.Color.BLUE
-                        outlinePaint.strokeWidth = 6f
-                    }
-                    map.overlays.add(line)
+            if (validPoints.isNotEmpty()) {
+                // 📍 Calcular centro
+                val avgLat = validPoints.map { it.latitude }.average()
+                val avgLon = validPoints.map { it.longitude }.average()
+                val center = GeoPoint(avgLat, avgLon)
+
+                // 📏 Calcular dispersión de puntos
+                val minLat = validPoints.minOf { it.latitude }
+                val maxLat = validPoints.maxOf { it.latitude }
+                val minLon = validPoints.minOf { it.longitude }
+                val maxLon = validPoints.maxOf { it.longitude }
+                val latDiff = abs(maxLat - minLat)
+                val lonDiff = abs(maxLon - minLon)
+
+                // 🔍 Zoom más cercano por defecto (más detalle)
+                val zoom = when {
+                    latDiff < 0.002 && lonDiff < 0.002 -> 18.5   // muy cerca, edificios visibles
+                    latDiff < 0.01 && lonDiff < 0.01 -> 17.5     // zona pequeña como la UTEZ
+                    else -> 15.0                                 // un poco más amplio
                 }
+
+                map.controller.setZoom(zoom)
+                map.controller.setCenter(center)
+
+                // 🟦 Dibujar las líneas
+                pointsByTrip.values.forEach { tripPoints ->
+                    if (tripPoints.size >= 2) {
+                        val line = Polyline().apply {
+                            setPoints(tripPoints.map { GeoPoint(it.latitude, it.longitude) })
+                            outlinePaint.color = android.graphics.Color.BLUE
+                            outlinePaint.strokeWidth = 6f
+                        }
+                        map.overlays.add(line)
+                    }
+                }
+            } else {
+                // 🌍 Sin puntos → mostrar zona de la UTEZ más de cerca
+                val utez = GeoPoint(18.8516, -99.1802)
+                map.controller.setCenter(utez)
+                map.controller.setZoom(17.8) // 👈 Más zoom
             }
 
             map.invalidate()
